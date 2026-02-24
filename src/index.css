@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+
+@layer utilities {
+  .bg-paper-light {
+    background-color: #f4f4f0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E");
+    background-attachment: fixed;
+  }
+
+  .bg-paper-dark {
+    background-color: #121212;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+    background-attachment: fixed;
+  }
+
+  .theme-panel {
+    @apply bg-white/40 dark:bg-[#1e1e1e]/40 backdrop-blur-xl border border-black/5 dark:border-white/10 relative overflow-hidden transition-all duration-300;
+    box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.05);
+  }
+
+  .theme-panel:hover {
+    @apply border-black/10 dark:border-white/20 bg-white/60 dark:bg-[#1e1e1e]/60;
+    box-shadow: 0 8px 30px 0 rgba(0, 0, 0, 0.08);
+  }
+
+  .theme-nav {
+    @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border border-black/5 dark:border-white/10 rounded-full shadow-lg dark:shadow-2xl overflow-hidden;
+  }
+
+  .theme-button {
+    @apply px-4 md:px-6 py-2 md:py-2.5 rounded-full bg-black/5 dark:bg-white/5 backdrop-blur-md border border-transparent text-gray-700 dark:text-white text-xs md:text-sm font-medium tracking-wide transition-all duration-300 hover:bg-black/10 dark:hover:bg-white/10 whitespace-nowrap;
+  }
+
+  .theme-button.active {
+    @apply bg-black text-white dark:bg-white dark:text-[#040508] font-bold;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+  }
+
+  .dark .theme-button.active {
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+html {
+  @apply m-0 p-0 font-sans antialiased text-gray-900 dark:text-gray-100 transition-colors duration-500;
+}
+
+body {
+  @apply m-0 p-0 bg-transparent;
+}
