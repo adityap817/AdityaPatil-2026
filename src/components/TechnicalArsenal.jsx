@@ -43,7 +43,10 @@ const defaultArsenal = [
 ];
 
 export default function TechnicalArsenal({ isAdmin }) {
-    const [arsenal, setArsenal] = useState([]);
+    const [arsenal, setArsenal] = useState(() => {
+        const cached = localStorage.getItem('arsenalCache');
+        return cached ? JSON.parse(cached) : defaultArsenal;
+    });
     const [isAdding, setIsAdding] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [formData, setFormData] = useState({ title: '', icon: '', skills: '' });
@@ -55,13 +58,15 @@ export default function TechnicalArsenal({ isAdmin }) {
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists() && docSnap.data().data) {
                     setArsenal(docSnap.data().data);
+                    localStorage.setItem('arsenalCache', JSON.stringify(docSnap.data().data));
                 } else {
                     setArsenal(defaultArsenal);
+                    localStorage.setItem('arsenalCache', JSON.stringify(defaultArsenal));
                     setDoc(docRef, { data: defaultArsenal }).catch(() => { });
                 }
             } catch (e) {
                 console.error("Error fetching arsenal:", e);
-                setArsenal(defaultArsenal);
+                // Maintain cached data instead of overwriting with defaultArsenal
             }
         };
         fetchData();
@@ -69,6 +74,7 @@ export default function TechnicalArsenal({ isAdmin }) {
 
     const saveToStats = async (data) => {
         setArsenal(data);
+        localStorage.setItem('arsenalCache', JSON.stringify(data));
         try {
             await setDoc(doc(db, 'portfolio', 'arsenal'), { data });
         } catch (e) {
