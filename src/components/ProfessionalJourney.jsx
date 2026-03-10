@@ -43,7 +43,10 @@ const defaultJourney = [
 ];
 
 export default function ProfessionalJourney({ isAdmin }) {
-    const [journey, setJourney] = useState([]);
+    const [journey, setJourney] = useState(() => {
+        const cached = localStorage.getItem('journeyCache');
+        return cached ? JSON.parse(cached) : defaultJourney;
+    });
     const [isAdding, setIsAdding] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [formData, setFormData] = useState({ role: '', period: '', company: '', description: '', color: 'cyan', icon: 'briefcase' });
@@ -55,13 +58,15 @@ export default function ProfessionalJourney({ isAdmin }) {
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists() && docSnap.data().data) {
                     setJourney(docSnap.data().data);
+                    localStorage.setItem('journeyCache', JSON.stringify(docSnap.data().data));
                 } else {
                     setJourney(defaultJourney);
+                    localStorage.setItem('journeyCache', JSON.stringify(defaultJourney));
                     setDoc(docRef, { data: defaultJourney }).catch(() => { });
                 }
             } catch (e) {
                 console.error("Error fetching journey:", e);
-                setJourney(defaultJourney);
+                // Maintain cached data instead of overwriting with defaultJourney
             }
         };
         fetchData();
@@ -69,6 +74,7 @@ export default function ProfessionalJourney({ isAdmin }) {
 
     const saveToStats = async (data) => {
         setJourney(data);
+        localStorage.setItem('journeyCache', JSON.stringify(data));
         try {
             await setDoc(doc(db, 'portfolio', 'journey'), { data });
         } catch (e) {
