@@ -37,17 +37,27 @@ const BrandLogo = ({ activeTab, setActiveTab }) => (
   </button>
 );
 
-const Navigation = ({ activeTab, setActiveTab, tabs, isAdmin, onAddClick }) => (
+const Navigation = ({ activeTab, setActiveTab, tabs, isAdmin, onAddClick, onDeleteTab, customTabsList }) => (
   <header className="fixed top-6 left-1/2 -translate-x-1/2 z-[60] w-full px-4 flex justify-center pointer-events-none">
     <nav className="theme-nav px-2 py-2 flex flex-row items-center justify-center space-x-1 w-max max-w-full overflow-x-auto no-scrollbar pointer-events-auto">
       {tabs.map((tab) => (
-        <button
-          key={tab}
-          onClick={() => setActiveTab(tab)}
-          className={`theme-button ${activeTab === tab ? "active" : ""}`}
-        >
-          {tab}
-        </button>
+        <div key={tab} className="flex items-center group relative">
+          <button
+            onClick={() => setActiveTab(tab)}
+            className={`theme-button ${activeTab === tab ? "active" : ""}`}
+          >
+            {tab}
+          </button>
+          {isAdmin && customTabsList && customTabsList.includes(tab) && (
+            <button 
+              onClick={() => onDeleteTab(tab)} 
+              className="absolute -right-1 top-0 opacity-0 group-hover:opacity-100 transition-opacity text-red-500 hover:text-red-600 bg-white/90 dark:bg-black/90 rounded-full p-0.5 shadow-sm"
+              title="Delete Category"
+            >
+              <X size={12} />
+            </button>
+          )}
+        </div>
       ))}
       {isAdmin && (
         <button
@@ -381,7 +391,10 @@ export default function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
 
-  const [customCategories, setCustomCategories] = useState([]);
+  const [customCategories, setCustomCategories] = useState(() => {
+    const cached = localStorage.getItem('customCategoriesCache');
+    return cached ? JSON.parse(cached) : [];
+  });
   const [showAddTabModal, setShowAddTabModal] = useState(false);
 
   useEffect(() => {
@@ -391,6 +404,7 @@ export default function App() {
         const docSnap = await getDoc(docRef);
         if (docSnap.exists() && docSnap.data().data) {
           setCustomCategories(docSnap.data().data);
+          localStorage.setItem('customCategoriesCache', JSON.stringify(docSnap.data().data));
         }
       } catch (e) { console.error("Error fetching custom categories:", e); }
     };
@@ -400,11 +414,24 @@ export default function App() {
   const handleSaveCategory = async (newCat) => {
     const updated = [...customCategories, newCat];
     setCustomCategories(updated);
+    localStorage.setItem('customCategoriesCache', JSON.stringify(updated));
     try {
       await setDoc(doc(db, 'portfolio', 'custom_categories'), { data: updated });
     } catch (e) { console.error("Error saving custom categories:", e); }
     setShowAddTabModal(false);
     setActiveTab(newCat.title);
+  };
+
+  const handleDeleteCategory = async (catTitle) => {
+    if (window.confirm(`Delete category "${catTitle}"?`)) {
+      const updated = customCategories.filter(c => c.title !== catTitle);
+      setCustomCategories(updated);
+      localStorage.setItem('customCategoriesCache', JSON.stringify(updated));
+      try {
+        await setDoc(doc(db, 'portfolio', 'custom_categories'), { data: updated });
+      } catch (e) { console.error("Error formatting custom categories:", e); }
+      if (activeTab === catTitle) setActiveTab("About");
+    }
   };
 
   const dynamicTabs = [...DEFAULT_TABS, ...customCategories.map(c => c.title)];
@@ -473,7 +500,15 @@ export default function App() {
 
       <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
       <BrandLogo activeTab={activeTab} setActiveTab={setActiveTab} />
-      <Navigation activeTab={activeTab} setActiveTab={setActiveTab} tabs={dynamicTabs} isAdmin={isAdmin} onAddClick={() => setShowAddTabModal(true)} />
+      <Navigation 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab} 
+        tabs={dynamicTabs} 
+        isAdmin={isAdmin} 
+        onAddClick={() => setShowAddTabModal(true)} 
+        customTabsList={customCategories.map(c => c.title)}
+        onDeleteTab={handleDeleteCategory}
+      />
       {activeTab !== "About" && <ContactDock />}
 
       <FlyingBanner />
