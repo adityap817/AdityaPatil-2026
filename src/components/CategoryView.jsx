@@ -64,7 +64,10 @@ const ThemeMap = {
 export default function CategoryView({ title, description, icon: Icon, colorTheme, concepts, storageKey, isAdmin, initialProjects = [] }) {
     const theme = ThemeMap[colorTheme] || ThemeMap.cyan;
 
-    const [projects, setProjects] = useState([]);
+    const [projects, setProjects] = useState(() => {
+        const cached = localStorage.getItem(`categoryCache_${storageKey}`);
+        return cached ? JSON.parse(cached) : initialProjects;
+    });
     const [editingId, setEditingId] = useState(null);
     const [isAdding, setIsAdding] = useState(false);
     const [formData, setFormData] = useState({ title: '', tag: '', desc: '', tags: '', link: '' });
@@ -76,13 +79,15 @@ export default function CategoryView({ title, description, icon: Icon, colorThem
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists() && docSnap.data().data) {
                     setProjects(docSnap.data().data);
+                    localStorage.setItem(`categoryCache_${storageKey}`, JSON.stringify(docSnap.data().data));
                 } else {
                     setProjects(initialProjects);
+                    localStorage.setItem(`categoryCache_${storageKey}`, JSON.stringify(initialProjects));
                     setDoc(docRef, { data: initialProjects }).catch(() => { });
                 }
             } catch (e) {
                 console.error("Error fetching category data:", e);
-                setProjects(initialProjects);
+                // Maintain cached data instead of overwriting with initialProjects
             }
         };
         fetchData();
@@ -90,6 +95,7 @@ export default function CategoryView({ title, description, icon: Icon, colorThem
 
     const saveToStats = async (newProjects) => {
         setProjects(newProjects);
+        localStorage.setItem(`categoryCache_${storageKey}`, JSON.stringify(newProjects));
         try {
             await setDoc(doc(db, 'portfolio', `category_${storageKey}`), { data: newProjects });
         } catch (e) {
